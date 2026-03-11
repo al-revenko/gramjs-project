@@ -13,19 +13,19 @@ export class Config {
     const TG_API_HASH = process.env.TG_API_HASH ?? "";
     const SESSION_STORE_PATH = process.env.SESSION_STORE_PATH ?? "";
 
-    if (Number.isNaN(this.PORT) || this.PORT === 0) {
+    if (Number.isNaN(PORT) || PORT === 0) {
       throw new Error(`Invalid PORT env: ${process.env.PORT}`);
     }
 
-    if (Number.isNaN(this.TG_API_ID) || this.TG_API_ID === 0) {
+    if (Number.isNaN(TG_API_ID) || TG_API_ID === 0) {
       throw new Error("Invalid TG_API_ID env");
     }
 
-    if (this.TG_API_HASH === "") {
+    if (TG_API_HASH === "") {
       throw new Error("Empty TG_API_HASH env");
     }
 
-    if (this.SESSION_STORE_PATH === "") {
+    if (SESSION_STORE_PATH === "") {
       throw new Error("Empty SESSION_FILENAME env");
     }
 

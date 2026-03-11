@@ -7,11 +7,12 @@ export interface AuthUserParams {
   phoneNumber: () => Promise<string>;
   password?: () => Promise<string>;
   phoneCode: () => Promise<string>;
+  onError?: (err: Error) => void;
 }
 
 export class TgClient {
-  private client: TelegramClient | null;
-  private stringSession: StringSession | null;
+  private client: TelegramClient | null = null;
+  private stringSession: StringSession | null = null;
 
   constructor(
     private apiCredentials: ApiCredentials,
@@ -63,25 +64,17 @@ export class TgClient {
       throw new Error("Client is not initialized");
     }
 
-    const client = this.client;
+    const isAuthorized = await this.isAuthorized();
 
-    let phone: string = "";
+    if (isAuthorized) {
+      throw new Error("User is already authorized");
+    }
 
-    await client.start({
-      phoneNumber: async () => {
-        phone = await authParams.phoneNumber();
-
-        return phone;
-      },
+    await this.client.signInUser(this.apiCredentials, {
+      phoneNumber: authParams.phoneNumber,
       password: authParams.password,
-      phoneCode: async () => {
-        await client.sendCode(this.apiCredentials, phone);
-
-        return authParams.phoneCode();
-      },
-      onError: (err) => {
-        throw err;
-      },
+      phoneCode: authParams.phoneCode,
+      onError: authParams.onError ?? (() => {}),
     });
 
     return this.stringSession.save();
