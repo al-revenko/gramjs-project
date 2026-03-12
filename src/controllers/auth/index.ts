@@ -1,14 +1,15 @@
+import z from "zod";
+import type { Express, Handler } from "express";
 import { TgClient } from "src/lib/tg";
 import { SessionModel } from "src/models/session";
 import { AuthService } from "src/services/auth";
-import type { Express, Handler } from "express";
-import z from "zod";
+import { getErrResponse, sendResponse } from "src/lib/api";
 
 interface AuthParams {
   getPhoneNumber: () => Promise<string>;
   getPassword?: () => Promise<string>;
   getPhoneCode: () => Promise<string>;
-  onError?: (error: Error) => void;
+  onTgError?: (error: Error) => void;
 }
 
 export class AuthController {
@@ -32,11 +33,15 @@ export class AuthController {
     try {
       const isAuthorized = await this.authService.isAuthorized();
 
-      res.status(200).json({ authorized: isAuthorized });
-    } catch (error) {
-      console.error(error);
+      return sendResponse(res, 200, { authorized: isAuthorized });
+    } catch (err) {
+      const { statusCode, content } = getErrResponse(err);
 
-      res.status(500).json({ error: "Failed to check authorization status" });
+      if (statusCode >= 500) {
+        console.error(err);
+      }
+
+      return sendResponse(res, statusCode, content);
     }
   };
 
@@ -44,7 +49,7 @@ export class AuthController {
     getPhoneNumber,
     getPassword,
     getPhoneCode,
-    onError,
+    onTgError,
   }: AuthParams) {
     const phoneNumberCb = async () => {
       const phoneNumber = await getPhoneNumber();
@@ -87,7 +92,7 @@ export class AuthController {
       phoneNumber: phoneNumberCb,
       password: getPassword && passwordCb,
       phoneCode: phoneCodeCb,
-      onError,
+      onTgError,
     });
   }
 }

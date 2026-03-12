@@ -4,6 +4,7 @@ import { TgClient } from "src/lib/tg";
 import { SessionModel } from "src/models/session";
 import { CLI } from "src/cli";
 import { AuthController } from "src/controllers/auth";
+import { MessagesController } from "src/controllers/messages";
 
 export interface TelegramConfig {
   apiId: number;
@@ -25,10 +26,14 @@ export class App {
   private tgClient: TgClient;
   private sessionModel: SessionModel;
   private cli: CLI;
+
   private authController: AuthController;
+  private messagesController: MessagesController;
 
   constructor(cfg: AppConfig) {
     this.express = express();
+
+    this.express.use(express.json());
 
     this.sessionModel = new SessionModel(cfg.session.storePath);
 
@@ -41,6 +46,11 @@ export class App {
       this.express,
       this.tgClient,
       this.sessionModel,
+    );
+
+    this.messagesController = new MessagesController(
+      this.express,
+      this.tgClient,
     );
 
     this.cli = new CLI(
@@ -80,7 +90,7 @@ export class App {
       this.server.close();
     }
 
-    if (!this.tgClient.isDestroyed()) {
+    if (!this.tgClient.isInitialized()) {
       await this.tgClient.destroy();
     }
 
